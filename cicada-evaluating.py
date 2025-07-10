@@ -69,7 +69,7 @@ def main(args):
         loss=loss(X_example, y_example)[0],
         name="comparison-background",
     )
-    X_example = X_signal["SUSYGGBBH"][:1]
+    X_example = X_signal["VBFHto2C"][:1]
     y_example = teacher.predict(X_example, verbose=args.verbose)
     draw.plot_reconstruction_results(
         X_example,
@@ -120,9 +120,9 @@ def main(args):
     )
 
     results_teacher, results_cicada_v1, results_cicada_v2 = dict(), dict(), dict()
-    results_teacher["2023 Zero Bias (Test)"] = y_loss_background_teacher
-    results_cicada_v1["2023 Zero Bias (Test)"] = y_loss_background_cicada_v1
-    results_cicada_v2["2023 Zero Bias (Test)"] = y_loss_background_cicada_v2
+    results_teacher["2017 open data Zero Bias (Test)"] = y_loss_background_teacher
+    results_cicada_v1["2017 open data Zero Bias (Test)"] = y_loss_background_cicada_v1
+    results_cicada_v2["2017 open data Zero Bias (Test)"] = y_loss_background_cicada_v2
 
     y_true, y_pred_teacher, y_pred_cicada_v1, y_pred_cicada_v2 = [], [], [], []
     inputs = []

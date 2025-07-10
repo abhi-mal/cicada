@@ -72,11 +72,18 @@ def main(args) -> None:
 
     gen = RegionETGenerator()
     X_train, X_val, X_test = gen.get_data_split(datasets)
-    X_signal, _ = gen.get_benchmark(config["signal"], filter_acceptance=False)
+    print(X_train.shape)
+    print(X_val.shape); input("got shapes?")
+    #X_signal, _ = gen.get_benchmark(config["signal"], filter_acceptance=False)
     gen_train = gen.get_generator(X_train, X_train, 512, True)
+    print(len(gen_train))#1114
     gen_val = gen.get_generator(X_val, X_val, 512)
-    outlier_train = gen.get_data(config["exposure"]["training"])
-    outlier_val = gen.get_data(config["exposure"]["validation"])
+    #outlier_train = gen.get_data(config["exposure"]["training"])
+    #outlier_val = gen.get_data(config["exposure"]["validation"])
+    outlier_train, outlier_val = gen.generate_random_exposure_data(X_train,X_val,500_000,100_000)
+
+    print(outlier_train.shape)
+    print(outlier_val.shape); input("got shapes?")
 
     X_train_student = np.concatenate([X_train, outlier_train])
     X_val_student = np.concatenate([X_val, outlier_val])

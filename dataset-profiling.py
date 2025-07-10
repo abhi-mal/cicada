@@ -41,7 +41,7 @@ def main(args=None) -> None:
 
     draw = Draw(output_dir=args.output, interactive=args.interactive)
 
-    for category, dataset in zip(["Background", "Signal"], [config["background"], config["signal"]]):
+    for category, dataset in zip(["Test"], [config["test"]]):
 
         deposits, labels = get_deposits(dataset)
 

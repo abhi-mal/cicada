@@ -71,7 +71,7 @@ class RegionETGenerator:
                     flags = h5py.File(dataset_path, "r")["AcceptanceFlag"][:].astype(
                         "bool"
                     )
-                    fraction = np.round(100 * sum(flags) / len(flags), 2)
+                    fraction = 100.0#np.round(100 * sum(flags) / len(flags), 2)
                 except KeyError:
                     fraction = 100.0
                 if filter_acceptance:
@@ -79,3 +79,31 @@ class RegionETGenerator:
                 signals[signal_name] = X
                 acceptance.append({"signal": signal_name, "acceptance": fraction})
         return signals, acceptance
+
+    def generate_random_exposure_data(
+        self,
+        X_train: np.ndarray, 
+        X_val: np.ndarray, 
+        num_samples_train: int = 100000,
+        num_samples_val: int = 100000
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Generates two random numpy arrays with values in the range of the min and max
+        values of the provided input arrays X_train and X_val.
+
+        Args:
+             X_train (np.ndarray): First input array.
+             X_val (np.ndarray): Second input array.
+             num_samples (int): Number of random samples to generate for each array.
+
+        Returns:
+             tuple:  Two numpy arrays of shape (num_samples, 18, 14, 1) filled with random values
+                     in the range of the min and max of X_train and X_val.
+        """
+        # Find the combined min and max values from X_train and X_val
+        global_min = min(np.min(X_train), np.min(X_val))
+        global_max = max(np.max(X_train), np.max(X_val))
+        # Generate two random arrays with values in the global range
+        rand_train = np.random.uniform(global_min, global_max, size=(num_samples_train, 18, 14, 1)).astype("float32")
+        rand_val = np.random.uniform(global_min, global_max, size=(num_samples_val, 18, 14, 1)).astype("float32")
+        return rand_train, rand_val
