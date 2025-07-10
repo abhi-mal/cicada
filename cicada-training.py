@@ -18,7 +18,7 @@ from tensorflow.keras.optimizers import Adam
 from utils import IsValidFile, CreateFolder
 from generator import RegionETGenerator
 from models import TeacherAutoencoder, CicadaV1, CicadaV2
-
+import gc
 
 def loss(y_true: npt.NDArray, y_pred: npt.NDArray) -> npt.NDArray:
     return np.mean((y_true - y_pred) ** 2, axis=(1, 2, 3))
@@ -40,7 +40,12 @@ def get_student_targets(
     X_hat = teacher.predict(X, batch_size=512, verbose=0)
     y = loss(X, X_hat)
     y = quantize(np.log(y) * 32)
-    return gen.get_generator(X.reshape((-1, 252, 1)), y, 1024, True)
+    dataset = gen.get_generator(X.reshape((-1, 252, 1)), y, 1024, True)
+    # fixing memory leak
+    del X_hat
+    del y
+    gc.collect()
+    return dataset
 
 
 def train_model(
@@ -140,6 +145,11 @@ def main(args) -> None:
             verbose=args.verbose,
             tag='v2'
         )
+        # fixing memory leak
+        del s_gen_train
+        del s_gen_val
+        del tmp_teacher
+        gc.collect()
 
 
 if __name__ == "__main__":
@@ -155,7 +165,7 @@ if __name__ == "__main__":
         "--output", "-o",
         action=CreateFolder,
         type=Path,
-        default="models_rand_only_student_1/",
+        default="models_rand_only_student_epochs100/",
         help="Path to directory where models will be stored",
     )
     parser.add_argument(
