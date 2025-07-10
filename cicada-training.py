@@ -51,7 +51,9 @@ def train_model(
     steps: int = 1,
     callbacks=None,
     verbose: bool = False,
+    tag = 'teacher',
 ) -> None:
+    print(f"training model {tag}")
     model.fit(
         gen_train,
         steps_per_epoch=len(gen_train),
@@ -80,18 +82,19 @@ def main(args) -> None:
     gen_val = gen.get_generator(X_val, X_val, 512)
     #outlier_train = gen.get_data(config["exposure"]["training"])
     #outlier_val = gen.get_data(config["exposure"]["validation"])
-    outlier_train, outlier_val = gen.generate_random_exposure_data(X_train,X_val,500_000,100_000)
+    outlier_train, outlier_val = gen.generate_random_exposure_data_from_hist(X_train,X_val,500_000,100_000)
 
     print(outlier_train.shape)
-    print(outlier_val.shape); input("got shapes?")
+    print(outlier_val.shape); input("got outlier shapes?")
 
     X_train_student = np.concatenate([X_train, outlier_train])
     X_val_student = np.concatenate([X_val, outlier_val])
 
-    teacher = TeacherAutoencoder((18, 14, 1)).get_model()
-    teacher.compile(optimizer=Adam(learning_rate=0.001), loss="mse")
-    t_mc = ModelCheckpoint(f"{args.output}/{teacher.name}", save_best_only=True)
-    t_log = CSVLogger(f"{args.output}/{teacher.name}/training.log", append=True)
+    #teacher = TeacherAutoencoder((18, 14, 1)).get_model()
+    #teacher.compile(optimizer=Adam(learning_rate=0.001), loss="mse")
+    #t_mc = ModelCheckpoint(f"{args.output}/{teacher.name}", save_best_only=True)
+    #t_log = CSVLogger(f"{args.output}/{teacher.name}/training.log", append=True)
+    teacher = load_model("models_rand_1/teacher") # using pretrained teacher
 
     cicada_v1 = CicadaV1((252,)).get_model()
     cicada_v1.compile(optimizer=Adam(learning_rate=0.001), loss="mae")
@@ -104,16 +107,16 @@ def main(args) -> None:
     cv2_log = CSVLogger(f"{args.output}/{cicada_v2.name}/training.log", append=True)
 
     for epoch in range(args.epochs):
-        train_model(
-            teacher,
-            gen_train,
-            gen_val,
-            epoch=epoch,
-            callbacks=[t_mc, t_log],
-            verbose=args.verbose,
-        )
+        #train_model(
+        #    teacher,
+        #    gen_train,
+        #    gen_val,
+        #    epoch=epoch,
+        #    callbacks=[t_mc, t_log],
+        #    verbose=args.verbose,
+        #)
 
-        tmp_teacher = load_model(f"{args.output}/teacher")
+        tmp_teacher = teacher#load_model(f"{args.output}/teacher")
         s_gen_train = get_student_targets(tmp_teacher, gen, X_train_student)
         s_gen_val = get_student_targets(tmp_teacher, gen, X_val_student)
 
@@ -125,6 +128,7 @@ def main(args) -> None:
             steps=10,
             callbacks=[cv1_mc, cv1_log],
             verbose=args.verbose,
+            tag='v1'
         )
         train_model(
             cicada_v2,
@@ -134,6 +138,7 @@ def main(args) -> None:
             steps=10,
             callbacks=[cv2_mc, cv2_log],
             verbose=args.verbose,
+            tag='v2'
         )
 
 
@@ -150,7 +155,7 @@ if __name__ == "__main__":
         "--output", "-o",
         action=CreateFolder,
         type=Path,
-        default="models/",
+        default="models_rand_only_student_1/",
         help="Path to directory where models will be stored",
     )
     parser.add_argument(
