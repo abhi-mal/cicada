@@ -13,7 +13,7 @@ from matplotlib.patches import Patch, Rectangle
 from matplotlib.ticker import MaxNLocator
 from matplotlib import gridspec
 from matplotlib.lines import Line2D
-from mpl_toolkits.axes_grid1.inset_locator import InsetPosition
+#from mpl_toolkits.axes_grid1.inset_locator import InsetPosition
 from sklearn.metrics import roc_curve, auc
 from sklearn.model_selection import StratifiedKFold
 
@@ -192,8 +192,8 @@ class Draw:
         name: str,
         is_data: bool = False,
     ):
-        fig, (ax1, ax2, ax3, cax) = plt.subplots(
-            ncols=4, figsize=(15, 10), gridspec_kw={"width_ratios": [1, 1, 1, 0.05]}
+        fig, (ax1, ax2, ax3) = plt.subplots(
+            ncols=3, figsize=(15, 10)
         )
         max_deposit = max(deposits_in.max(), deposits_out.max())
 
@@ -228,9 +228,9 @@ class Draw:
             cmap="Purples",
         )
 
-        ip = InsetPosition(ax3, [1.05, 0, 0.05, 1])
-        cax.set_axes_locator(ip)
-        fig.colorbar(im, cax=cax, ax=[ax1, ax2, ax3]).set_label(
+        #ip = InsetPosition(ax3, [1.05, 0, 0.05, 1])
+        #cax.set_axes_locator(ip)
+        fig.colorbar(im, ax=[ax1, ax2, ax3]).set_label(
             label=r"Calorimeter E$_T$ deposit (GeV)", fontsize=18
         )
         self._save_fig(name)
@@ -515,7 +515,7 @@ class Draw:
     ):
 
         fig, axs = plt.subplots(
-            nrows=2, ncols=4, figsize=(15, 10), gridspec_kw={"width_ratios": [1, 1, 1, 0.05]}
+            nrows=2, ncols=4, figsize=(15, 10)
         )
         max_deposit = image.max()
         xmax, ymax, _ = image.shape
@@ -527,18 +527,18 @@ class Draw:
         axs[0, 0].imshow(image, vmin=0, vmax=max_deposit, cmap="Purples")
         axs[0, 1].imshow(f(image), vmin=0, vmax=max_deposit, cmap="Purples")
         im = axs[0, 2].imshow(g(f(image)), vmin=0, vmax=max_deposit, cmap="Purples")
-        ip = InsetPosition(axs[0][2], [1.05, 0, 0.05, 1])
-        axs[0][3].set_axes_locator(ip)
-        fig.colorbar(im, cax=axs[0][3], ax=axs[0][:-1]).set_label(
+        #ip = InsetPosition(axs[0][2], [1.05, 0, 0.05, 1])
+        #axs[0][3].set_axes_locator(ip)
+        fig.colorbar(im, ax=axs[0][:-1]).set_label(
             label=r"Calorimeter E$_T$ deposit (GeV)", fontsize=18
         )
 
         axs[1, 0].imshow(image, vmin=0, vmax=max_deposit, cmap="Purples")
         axs[1, 1].imshow(g(image), vmin=0, vmax=max_deposit, cmap="Purples")
         im = axs[1, 2].imshow(f(g(image)), vmin=0, vmax=max_deposit, cmap="Purples")
-        ip = InsetPosition(axs[1][2], [1.05, 0, 0.05, 1])
-        axs[1][3].set_axes_locator(ip)
-        fig.colorbar(im, cax=axs[1][3], ax=axs[1][:-1]).set_label(
+        #ip = InsetPosition(axs[1][2], [1.05, 0, 0.05, 1])
+        #axs[1][3].set_axes_locator(ip)
+        fig.colorbar(im, ax=axs[1][:-1]).set_label(
             label=r"Calorimeter E$_T$ deposit (GeV)", fontsize=18
         )
 

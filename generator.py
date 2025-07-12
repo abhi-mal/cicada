@@ -149,8 +149,8 @@ class RegionETGenerator:
         bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2
         # Convert the frequency counts into a probability distribution.
         probabilities = counts / counts.sum()
-        print(bin_centers)
-        print(probabilities)
+        #print(bin_centers)
+        #print(probabilities)
 
         # If requested, plot the histogram and save it
         if plot_hist:

@@ -60,7 +60,7 @@ class CreateFolder(argparse.Action):
 
 def predict_single_image(model, image):
     image = np.expand_dims(image, axis=0)
-    pred = model.predict(image, verbose=False)
+    pred = model.predict(image, verbose=False)['teacher_outputs']
     return np.squeeze(pred, axis=0)
 
 
