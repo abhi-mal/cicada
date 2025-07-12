@@ -18,9 +18,18 @@ from utils import IsValidFile, IsReadableDir, CreateFolder, predict_single_image
 from drawing import Draw
 from generator import RegionETGenerator
 
+def quantize(arr: npt.NDArray, precision: tuple = (16, 8)) -> npt.NDArray:
+    word, int_ = precision
+    decimal = word - int_
+    step = 1 / 2**decimal
+    max_ = 2**int_ - step
+    arrq = step * np.round(arr / step)
+    arrc = np.clip(arrq, 0, max_)
+    return arrc
 
 def loss(y_true: npt.NDArray, y_pred: npt.NDArray) -> npt.NDArray:
-    return np.mean((y_true - y_pred) ** 2, axis=(1, 2, 3))
+    mse_loss = np.mean((y_true - y_pred) ** 2, axis=(1, 2, 3))
+    return mse_loss
 
 
 def main(args):
@@ -120,7 +129,7 @@ def main(args):
     )
 
     results_teacher, results_cicada_v1, results_cicada_v2 = dict(), dict(), dict()
-    results_teacher["2017 open data Zero Bias (Test)"] = y_loss_background_teacher
+    results_teacher["2017 open data Zero Bias (Test)"] = quantize(np.log(y_loss_background_teacher) * 32)# transformation so that we can compare teacher and student anomaly score
     results_cicada_v1["2017 open data Zero Bias (Test)"] = y_loss_background_cicada_v1
     results_cicada_v2["2017 open data Zero Bias (Test)"] = y_loss_background_cicada_v2
 
@@ -138,7 +147,7 @@ def main(args):
         y_loss_cicada_v2 = cicada_v2.predict(
             data.reshape(-1, 252, 1), batch_size=512, verbose=args.verbose
         )
-        results_teacher[name] = y_loss_teacher
+        results_teacher[name] = quantize(np.log(y_loss_teacher) * 32)
         results_cicada_v1[name] = y_loss_cicada_v1
         results_cicada_v2[name] = y_loss_cicada_v2
 
