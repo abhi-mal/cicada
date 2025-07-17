@@ -91,7 +91,7 @@ def main(args) -> None:
     gen_val = gen.get_generator(X_val, X_val, 512)
     #outlier_train = gen.get_data(config["exposure"]["training"])
     #outlier_val = gen.get_data(config["exposure"]["validation"])
-    outlier_train, outlier_val = gen.generate_random_exposure_data_from_hist(X_train,X_val,500_000,100_000)
+    outlier_train, outlier_val = gen.generate_random_exposure_data(X_train,X_val,500_000,100_000)
 
     print(outlier_train.shape)
     print(outlier_val.shape)#; input("got outlier shapes?")
@@ -196,19 +196,19 @@ if __name__ == "__main__":
         "--output", "-o",
         action=CreateFolder,
         type=Path,
-        default="models_rand_hgq2_epochs100/",
+        default="models_rand_hgq2_epochs100_max1k_uniform/",
         help="Path to directory where models will be stored",
     )
     parser.add_argument(
         "-e", "--epochs",
         type=int,
         help="Number of training epochs",
-        default=100,
+        default=5,
     )
     parser.add_argument(
         "-v", "--verbose",
         action="store_true",
         help="Output verbosity",
-        default=False,
+        default=True,
     )
     main(parser.parse_args())

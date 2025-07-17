@@ -341,14 +341,14 @@ class Draw:
                 label=rf"{label}, Baseline",
             )
 
-        plt.plot(
-            [0.003, 0.003],
-            [0, 1],
-            linestyle="--",
-            lw=1,
-            color="black",
-            label="3 kHz",
-        )
+        #plt.plot(
+        #    [0.003, 0.003],
+        #    [0, 1],
+        #    linestyle="--",
+        #    lw=1,
+        #    color="black",
+        #    label="3 kHz",
+        #)
         plt.xlim([0.0002861, 28.61])
         plt.ylim([0.01, 1.0])
         plt.xscale("log")

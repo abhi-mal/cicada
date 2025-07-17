@@ -101,8 +101,8 @@ class RegionETGenerator:
                      in the range of the min and max of X_train and X_val.
         """
         # Find the combined min and max values from X_train and X_val
-        global_min = min(np.min(X_train), np.min(X_val))
-        global_max = max(np.max(X_train), np.max(X_val))
+        global_min = 0#min(np.min(X_train), np.min(X_val))
+        global_max = 1000#max(np.max(X_train), np.max(X_val))
         # Generate two random arrays with values in the global range
         rand_train = np.random.uniform(global_min, global_max, size=(num_samples_train, 18, 14, 1)).astype("float32")
         rand_val = np.random.uniform(global_min, global_max, size=(num_samples_val, 18, 14, 1)).astype("float32")
