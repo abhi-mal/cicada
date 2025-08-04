@@ -46,11 +46,11 @@ def main(args):
     X_signal, _ = gen.get_benchmark(config["signal"], filter_acceptance=False)
     gen_train = gen.get_generator(X_train, X_train, 512, True)
     gen_val = gen.get_generator(X_val, X_val, 512)
-    outlier_train = gen.get_data(config["exposure"]["training"])
-    outlier_val = gen.get_data(config["exposure"]["validation"])
+    #outlier_train = gen.get_data(config["exposure"]["training"])
+    #outlier_val = gen.get_data(config["exposure"]["validation"])
 
-    X_train_student = np.concatenate([X_train, outlier_train])
-    X_val_student = np.concatenate([X_val, outlier_train])
+    #X_train_student = np.concatenate([X_train, outlier_train])
+    #X_val_student = np.concatenate([X_val, outlier_train])
 
     if args.huggingface:
         from huggingface_hub import from_pretrained_keras
@@ -78,7 +78,7 @@ def main(args):
         loss=loss(X_example, y_example)[0],
         name="comparison-background",
     )
-    X_example = X_signal["VBFHto2C"][:1]
+    X_example = X_signal["TTHadronic"][:1]
     y_example = teacher.predict(X_example, verbose=args.verbose)
     draw.plot_reconstruction_results(
         X_example,
