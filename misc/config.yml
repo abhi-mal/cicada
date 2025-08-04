@@ -1,7 +1,7 @@
 ---
 background:
  - path:
-   - '/hdfs/store/user/mallampalli/open_data/cicada/processed_files/h5/all_files.h5'
+   - '/nfs_scratch/mallampalli/open_data/cicada/training/all_zb_train_files_open_data_calotree_input_ntuplizer.h5'
    name: '2017 opendata ZB Run E'
    use: True
  - path:
@@ -29,9 +29,9 @@ background:
 
 signal:
  - path:
-   - '/hdfs/store/user/mallampalli/cicada/Signal/VBFHToCC_M-125_TuneCP5_13p6TeV_powheg-pythia8_0.h5'
+   - '/nfs_scratch/mallampalli/open_data/cicada/training/VBFHToCC_M-125_TuneCP5_13p6TeV_powheg-pythia8_0.h5'
    name: 'VBFHto2C'
-   use: True
+   use: False
  - path:
    - '/eos/project/c/cicada-project/data/2023/Signal/SUEP.h5'
    name: 'SUEP'
@@ -45,13 +45,13 @@ signal:
    name: 'VBFHto2C'
    use: False
  - path:
-   - '/eos/project/c/cicada-project/data/2023/Signal/TT.h5'
-   name: 'TT' 
-   use: False
+   - '/nfs_scratch/mallampalli/open_data/cicada/training/tt_hadronic_calotree_input_ntuplizer.h5'
+   name: 'TTHadronic' 
+   use: True
  - path:
-   - '/eos/project/c/cicada-project/data/2023/Signal/SUSYGGBBH.h5'
-   name: 'SUSYGGBBH'
-   use: False
+   - '/nfs_scratch/mallampalli/open_data/cicada/training/tt_2l2nu_calotree_input_ntuplizer.h5'
+   name: 'TT2L2Nu'
+   use: True
 
 exposure:
  training:
@@ -63,11 +63,11 @@ test:
  - path:
    - '/hdfs/store/user/mallampalli/open_data/cicada/processed_files/h5/test_file_data.h5'
    name: '2017 opendata ZB Run E testfile'
-   use: True
+   use: False
  - path:
    - '/hdfs/store/user/mallampalli/open_data/cicada/processed_files/using_container/test/h5/0078A596-9FA4-E711-BE5B-02163E012242_ZB.h5'
    name: 'container: 2017 opendata ZB Run E testfile'
-   use: True   
+   use: False   
  - path:
    - '/hdfs/store/user/mallampalli/cicada/Signal/SUEP.h5'
    name: 'SUEP (old files)'
@@ -75,8 +75,8 @@ test:
  - path:
    - '/hdfs/store/user/mallampalli/open_data/cicada/processed_files/using_container/test/h5/qcd.h5'
    name: 'container: QCD'
-   use: True
+   use: False
  - path:
    - '/hdfs/store/user/mallampalli/open_data/cicada/processed_files/using_container/test/h5/tt_hadronic.h5'
    name: 'container: tt_hadronic'
-   use: True     
+   use: False     

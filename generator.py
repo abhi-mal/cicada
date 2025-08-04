@@ -32,14 +32,24 @@ class RegionETGenerator:
         )
 
     def get_data(self, datasets_paths: List[Path]) -> npt.NDArray:
-        inputs = []
+        et_list = []
+        taubit_list = []
+        egbit_list = []
         for dataset_path in datasets_paths:
-            inputs.append(
-                h5py.File(dataset_path, "r")["CaloRegions"][:].astype("float32")
-            )
-        X = np.concatenate(inputs)
-        X = np.reshape(X, (-1, 18, 14, 1))
-        return X
+                f = h5py.File(dataset_path, "r")
+                data = f["CaloRegions"][:]
+                et_list.append(data['et'])
+                taubit_list.append(data['taubit'])
+                egbit_list.append(data['egbit'])
+        X_et = np.concatenate(et_list)
+        X_taubit = np.concatenate(taubit_list)
+        X_egbit = np.concatenate(egbit_list) 
+        print(X_et.shape) 
+        print(X_taubit.shape) 
+        print(X_egbit.shape)
+        X = np.stack([X_et, X_taubit, X_egbit], axis=-1) 
+        print(X.shape)
+        return X.astype("float32")
 
     def get_data_split(
         self, datasets_paths: List[Path]
@@ -65,8 +75,15 @@ class RegionETGenerator:
                 continue
             signal_name = dataset["name"]
             for dataset_path in dataset["path"]:
-                X = h5py.File(dataset_path, "r")["CaloRegions"][:].astype("float32")
-                X = np.reshape(X, (-1, 18, 14, 1))
+                f = h5py.File(dataset_path, "r")
+                data = f["CaloRegions"][:]
+                X_et = data['et']
+                X_taubit = data['taubit']
+                X_egbit = data['egbit']
+                X = np.stack([X_et, X_taubit, X_egbit], axis=-1)
+                X = X.astype("float32")
+                #X = h5py.File(dataset_path, "r")["CaloRegions"][:].astype("float32")
+                #X = np.reshape(X, (-1, 18, 14, 1))
                 try:
                     flags = h5py.File(dataset_path, "r")["AcceptanceFlag"][:].astype(
                         "bool"
@@ -101,11 +118,26 @@ class RegionETGenerator:
                      in the range of the min and max of X_train and X_val.
         """
         # Find the combined min and max values from X_train and X_val
-        global_min = min(np.min(X_train), np.min(X_val))
-        global_max = max(np.max(X_train), np.max(X_val))
+        global_min = 0#min(np.min(X_train), np.min(X_val))
+        global_max = 1000#max(np.max(X_train), np.max(X_val))
         # Generate two random arrays with values in the global range
-        rand_train = np.random.uniform(global_min, global_max, size=(num_samples_train, 18, 14, 1)).astype("float32")
-        rand_val = np.random.uniform(global_min, global_max, size=(num_samples_val, 18, 14, 1)).astype("float32")
+        #rand_train = np.random.uniform(global_min, global_max, size=(num_samples_train, 18, 14, 1)).astype("float32")
+        #rand_val = np.random.uniform(global_min, global_max, size=(num_samples_val, 18, 14, 1)).astype("float32")
+
+        rand_et = np.random.uniform(global_min, global_max, size=(num_samples_train, 18, 14))
+        #Generate random bit values (taubit, egbit) as integers 0 or 1
+        rand_taubit = np.random.randint(0, 2, size=(num_samples_train, 18, 14))
+        rand_egbit = np.random.randint(0, 2, size=(num_samples_train, 18, 14))
+        rand_train = np.stack([rand_et, rand_taubit, rand_egbit], axis=-1)
+        rand_train = rand_train.astype("float32")
+
+        rand_et = np.random.uniform(global_min, global_max, size=(num_samples_val, 18, 14))
+        #Generate random bit values (taubit, egbit) as integers 0 or 1
+        rand_taubit = np.random.randint(0, 2, size=(num_samples_val, 18, 14))
+        rand_egbit = np.random.randint(0, 2, size=(num_samples_val, 18, 14))
+        rand_val = np.stack([rand_et, rand_taubit, rand_egbit], axis=-1)
+        rand_val = rand_val.astype("float32")
+
         return rand_train, rand_val
 
     def generate_random_exposure_data_from_hist(

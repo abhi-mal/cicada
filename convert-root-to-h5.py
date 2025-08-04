@@ -19,31 +19,42 @@ class DataSource:
     ids: ak.highlevel.Array
     phi: ak.highlevel.Array
     eta: ak.highlevel.Array
+    taubit: ak.highlevel.Array
+    egbit: ak.highlevel.Array
     acceptanceFlag: ak.highlevel.Array
     size: int
-    _calo_vars = ["iet", "ieta", "iphi"]
+    _calo_vars = ["modelInput", "iEta", "iPhi","tauBits","egBits"]
+    #_calo_vars = ["iet", "ieta", "iphi"]
     _acceptance_vars = ["jetEta", "jetPt"]
 
     def __init__(self, in_file, tree_name, tree_gen):
         with uproot.open(in_file) as in_file:
             tree = in_file[tree_name]
             arrays = tree.arrays(self._calo_vars)
-            eta = arrays["ieta"]
-            phi = arrays["iphi"]
-            et = arrays["iet"]
-            self.size = len(eta)
+            #eta = arrays["ieta"]
+            #phi = arrays["iphi"]
+            #et = arrays["iet"]
+            eta = arrays["iEta"]
+            phi = arrays["iPhi"]
+            et = arrays["modelInput"]   
+            taubit = arrays["tauBits"] 
+            egbit =   arrays["egBits"]        
 
-            mask = (eta >= -28) & (eta <= 28)
-            eta, phi, et = eta[mask], phi[mask], et[mask]
-            eta = ak.where(eta < 0, eta, eta - 1)
-            eta = eta + 28
-            phi = (phi + 1) % 72
+            self.size = len(eta) 
+
+            #mask = (eta >= -28) & (eta <= 28)
+            #eta, phi, et = eta[mask], phi[mask], et[mask]
+            #eta = ak.where(eta < 0, eta, eta - 1)
+            #eta = eta + 28
+            #phi = (phi + 1) % 72
 
             ids = np.arange(len(eta))
             self.ids = ak.flatten(ak.broadcast_arrays(ids, eta)[0])
             self.phi = ak.flatten(phi, None)
             self.eta = ak.flatten(eta, None)
             self.et = ak.flatten(et, None)
+            self.taubit = ak.flatten(taubit, None)
+            self.egbit = ak.flatten(egbit, None)
 
             # Process Generator Information
             try:
@@ -82,27 +93,37 @@ def convert(
         print("Processing {}".format(in_.split("/")[-1]))
 
         source = DataSource(in_, calo_tree, acceptance_tree)
-        deposits = np.zeros((len(source), 72, 56))
+        #deposits = np.zeros((len(source), 72, 56))
+        deposits = np.zeros((len(source), 18, 14))
 
         # Get raw data
         et = source.et.to_numpy()
         ids = source.ids.to_numpy()
         phi = source.phi.to_numpy()
         eta = source.eta.to_numpy()
+        taubit = source.taubit.to_numpy()
+        egbit = source.egbit.to_numpy()
         flags = source.acceptanceFlag.to_numpy()
-
+        
         # Calculate regional deposits
         deposits[ids, phi, eta] = et
 
         # Reduce to towers
-        region_et = block_reduce(deposits, (1, 4, 4), np.sum)
+        #region_et = block_reduce(deposits, (1, 4, 4), np.sum)
+        region_et = deposits
         region_et = np.where(region_et > 1023, 1023, region_et)
+
+        structured_dtype = [('et', 'f4'), ('taubit', 'u2'), ('egbit', 'u2')]
+        combined_data = np.zeros(region_et.shape, dtype=structured_dtype)
+        combined_data['et'] = region_et.reshape(-1,18,14)
+        combined_data['taubit'] = taubit.reshape(-1,18,14)
+        combined_data['egbit'] = egbit.reshape(-1,18,14)
 
         # Save it in h5 file
         with h5py.File(save_path, "a") as h5f:
             if create:
                 h5f.create_dataset(
-                    "CaloRegions", data=region_et, maxshape=(None, 18, 14), chunks=True
+                    "CaloRegions", data=combined_data, maxshape=(None, 18, 14), chunks=True
                 )
                 h5f.create_dataset(
                     "AcceptanceFlag", data=flags, maxshape=(None,), chunks=True
@@ -110,9 +131,9 @@ def convert(
                 create = False
                 continue
 
-            size = h5f["CaloRegions"].shape[0] + region_et.shape[0]
+            size = h5f["CaloRegions"].shape[0] + combined_data.shape[0]
             h5f["CaloRegions"].resize((size), axis=0)
-            h5f["CaloRegions"][-region_et.shape[0] :] = region_et
+            h5f["CaloRegions"][-combined_data.shape[0] :] = combined_data
             if len(flags):
                 h5f["AcceptanceFlag"].resize((size), axis=0)
                 h5f["AcceptanceFlag"][-flags.shape[0] :] = flags

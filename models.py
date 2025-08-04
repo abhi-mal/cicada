@@ -20,7 +20,7 @@ class TeacherAutoencoder:
 
     def get_model(self):
         inputs = Input(shape=self.input_shape, name="teacher_inputs_")
-        x = Reshape((18, 14, 1), name="teacher_reshape")(inputs)
+        x = Reshape((18, 14, 3), name="teacher_reshape")(inputs)
         x = Conv2D(20, (3, 3), strides=1, padding="same", name="teacher_conv2d_1")(x)
         x = Activation("relu", name="teacher_relu_1")(x)
         x = AveragePooling2D((2, 2), name="teacher_pool_1")(x)
@@ -37,7 +37,7 @@ class TeacherAutoencoder:
         x = Conv2D(20, (3, 3), strides=1, padding="same", name="teacher_conv2d_4")(x)
         x = Activation("relu", name="teacher_relu_5")(x)
         outputs = Conv2D(
-            1,
+            3,
             (3, 3),
             activation="relu",
             strides=1,
@@ -110,7 +110,7 @@ class CicadaV2:
 
     def get_model(self):
         inputs = Input(shape=self.input_shape, name="inputs_")
-        x = Reshape((18, 14, 1), name="reshape")(inputs)
+        x = Reshape((18, 14, 3), name="reshape")(inputs)
         x = QConv2D(
             4,
             (2, 2),

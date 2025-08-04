@@ -46,13 +46,15 @@ def main(args):
     X_signal, _ = gen.get_benchmark(config["signal"], filter_acceptance=False)
     gen_train = gen.get_generator(X_train, X_train, 512, True)
     gen_val = gen.get_generator(X_val, X_val, 512)
-    outlier_train = gen.get_data(config["exposure"]["training"])
-    outlier_val = gen.get_data(config["exposure"]["validation"])
+    outlier_train, outlier_val = gen.generate_random_exposure_data(X_train,X_val,500,100)
+    #outlier_train = gen.get_data(config["exposure"]["training"])
+    #outlier_val = gen.get_data(config["exposure"]["validation"])
 
     X_train_student = np.concatenate([X_train, outlier_train])
     X_val_student = np.concatenate([X_val, outlier_train])
 
     if args.huggingface:
+        print("Getting huggingface models")
         from huggingface_hub import from_pretrained_keras
         teacher = from_pretrained_keras("cicada-project/teacher-v.0.1")
         cicada_v1 = from_pretrained_keras("cicada-project/cicada-v1.1")
@@ -60,7 +62,7 @@ def main(args):
 
     else:
         teacher = load_model(f"{args.input}/teacher")
-        cicada_v1 = load_model(f"{args.input}/cicada-v1")
+        cicada_v1 = load_model(f"{args.input}/cicada-v2")
         cicada_v2 = load_model(f"{args.input}/cicada-v2")
 
         for model in [teacher, cicada_v1, cicada_v2]:
@@ -71,22 +73,30 @@ def main(args):
 
     # Comparison between original and reconstructed inputs
     X_example = X_test[:1]
+    print(X_example.shape)
     y_example = teacher.predict(X_example, verbose=args.verbose)
-    draw.plot_reconstruction_results(
-        X_example,
-        y_example,
-        loss=loss(X_example, y_example)[0],
-        name="comparison-background",
-    )
-    X_example = X_signal["VBFHto2C"][:1]
+    channel_names = ["et", "taubit", "egbit"]
+    for i, ch_name in enumerate(channel_names):
+        X_channel = X_example[:, :, :, i:i+1]
+        y_channel = y_example[:, :, :, i:i+1]
+        draw.plot_reconstruction_results(
+                X_channel,
+                y_channel,
+                loss=loss(X_channel, y_channel)[0],
+                name="comparison-background-%s"%ch_name,
+        )
+    X_example = X_signal["TTHadronic"][:1]
     y_example = teacher.predict(X_example, verbose=args.verbose)
-    draw.plot_reconstruction_results(
-        X_example,
-        y_example,
-        loss=loss(X_example, y_example)[0],
-        name="comparison-signal",
-    )
-
+    for i, ch_name in enumerate(channel_names):
+        X_channel = X_example[:, :, :, i:i+1]
+        y_channel = y_example[:, :, :, i:i+1]
+        draw.plot_reconstruction_results(
+                X_channel,
+                y_channel,
+                loss=loss(X_example, y_example)[0],
+                name="comparison-signal-%s"%ch_name,
+        )
+    '''
     # Equivariance plot
     X_example = X_test[0]
     draw.make_equivariance_plot(
@@ -116,16 +126,16 @@ def main(args):
         phi_losses,
         name='loss-variance-phi-teacher-average'
     )
-
+    '''
 
     # Evaluation
     y_pred_background_teacher = teacher.predict(X_test, batch_size=512, verbose=args.verbose)
     y_loss_background_teacher = loss(X_test, y_pred_background_teacher)
     y_loss_background_cicada_v1 = cicada_v1.predict(
-        X_test.reshape(-1, 252, 1), batch_size=512, verbose=args.verbose
+        X_test.reshape(-1, 18*14*3, 1), batch_size=512, verbose=args.verbose
     )
     y_loss_background_cicada_v2 = cicada_v2.predict(
-        X_test.reshape(-1, 252, 1), batch_size=512, verbose=args.verbose
+        X_test.reshape(-1, 18*14*3, 1), batch_size=512, verbose=args.verbose
     )
 
     results_teacher, results_cicada_v1, results_cicada_v2 = dict(), dict(), dict()
@@ -142,10 +152,10 @@ def main(args):
             data, teacher.predict(data, batch_size=512, verbose=args.verbose)
         )
         y_loss_cicada_v1 = cicada_v1.predict(
-            data.reshape(-1, 252, 1), batch_size=512, verbose=args.verbose
+            data.reshape(-1, 18*14*3, 1), batch_size=512, verbose=args.verbose
         )
         y_loss_cicada_v2 = cicada_v2.predict(
-            data.reshape(-1, 252, 1), batch_size=512, verbose=args.verbose
+            data.reshape(-1, 18*14*3, 1), batch_size=512, verbose=args.verbose
         )
         results_teacher[name] = quantize(np.log(y_loss_teacher) * 32)
         results_cicada_v1[name] = y_loss_cicada_v1
@@ -179,7 +189,8 @@ def main(args):
         [*results_cicada_v2],
         "anomaly-score-cicada-v2",
     )
-
+    print(y_true[0].shape)
+    print(y_pred_teacher[0].shape)
     # ROC Curves with Cross-Validation
     draw.plot_roc_curve(y_true, y_pred_teacher, [*X_signal], inputs, "roc-teacher")
     draw.plot_roc_curve(y_true, y_pred_cicada_v1, [*X_signal], inputs, "roc-cicada-v1")

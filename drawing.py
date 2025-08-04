@@ -305,8 +305,8 @@ class Draw:
     ):
         skf = StratifiedKFold(n_splits=cv, shuffle=True, random_state=42)
         base_line_alg = {
-            'mean': lambda x: np.mean(x**2, axis=(1, 2)),
-            'max': lambda x: np.max(x**2, axis=(1, 2))
+            'mean': lambda x: np.mean(x**2, axis=(1, 2, 3)),
+            'max': lambda x: np.max(x**2, axis=(1, 2, 3))
         }[baseline]
         for y_true, y_pred, label, color, d in zip(
             y_trues, y_preds, labels, self.cmap, inputs
