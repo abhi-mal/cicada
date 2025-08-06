@@ -44,7 +44,8 @@ def get_student_targets(
     X_hat = X_hat_dict['teacher_outputs'] # needed because we are loading a old model into keras3
     y = loss(X, X_hat)
     y = quantize(np.log(y) * 32)
-    dataset = gen.get_generator(X.reshape((-1, 252, 1)), y, 1024, True)
+    #dataset = gen.get_generator(X.reshape((-1, 252, 1)), y, 1024, True)#model has reshape
+    dataset = gen.get_generator(X.reshape((-1, 18, 14, 1)), y, 1024, True)# no reshape
     # fixing memory leak
     del X_hat
     del y
@@ -109,7 +110,7 @@ def main(args) -> None:
     outputs = teacher_layer(inputs)
     teacher = keras.Model(inputs, outputs) # needed because we are loading a old model into keras3
 
-    student_hgq = cicadav2_hgq2((252,)).get_model()
+    student_hgq = cicadav2_hgq2(input_shape).get_model()
     student_hgq.compile(optimizer=Adam(learning_rate=0.001), loss="mae")
     model_out_dir = f"{args.output}/{student_hgq.name}"
     os.makedirs(model_out_dir,exist_ok=True)
@@ -196,7 +197,7 @@ if __name__ == "__main__":
         "--output", "-o",
         action=CreateFolder,
         type=Path,
-        default="models_rand_hgq2_epochs100_max1k_uniform/",
+        default="models_rand_hgq2_epochs100_max1k_uniform_no_reshape/",
         help="Path to directory where models will be stored",
     )
     parser.add_argument(

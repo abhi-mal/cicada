@@ -144,10 +144,12 @@ def main(args):
     y_pred_background_teacher = teacher.predict(X_test, batch_size=512, verbose=args.verbose)['teacher_outputs']
     y_loss_background_teacher = loss(X_test, y_pred_background_teacher)
     y_loss_background_cicada_v1 = cicada_v1.predict(
-        X_test.reshape(-1, 252, 1), batch_size=512, verbose=args.verbose
+        #X_test.reshape(-1, 252, 1), batch_size=512, verbose=args.verbose #model has reshape
+        X_test.reshape(-1, 18, 14, 1), batch_size=512, verbose=args.verbose
     )
     y_loss_background_cicada_v2 = cicada_v2.predict(
-        X_test.reshape(-1, 252, 1), batch_size=512, verbose=args.verbose
+        #X_test.reshape(-1, 252, 1), batch_size=512, verbose=args.verbose #model has reshape
+        X_test.reshape(-1, 18, 14, 1), batch_size=512, verbose=args.verbose
     )
 
     results_teacher, results_cicada_v1, results_cicada_v2 = dict(), dict(), dict()
@@ -164,10 +166,12 @@ def main(args):
             data, teacher.predict(data, batch_size=512, verbose=args.verbose)['teacher_outputs']
         )
         y_loss_cicada_v1 = cicada_v1.predict(
-            data.reshape(-1, 252, 1), batch_size=512, verbose=args.verbose
+            #data.reshape(-1, 252, 1), batch_size=512, verbose=args.verbose #model has reshape
+            data.reshape(-1, 18, 14, 1), batch_size=512, verbose=args.verbose
         )
         y_loss_cicada_v2 = cicada_v2.predict(
-            data.reshape(-1, 252, 1), batch_size=512, verbose=args.verbose
+            #data.reshape(-1, 252, 1), batch_size=512, verbose=args.verbose #model has reshape
+            data.reshape(-1, 18, 14, 1), batch_size=512, verbose=args.verbose
         )
         results_teacher[name] = quantize(np.log(y_loss_teacher) * 32)
         results_cicada_v1[name] = y_loss_cicada_v1

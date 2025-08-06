@@ -58,7 +58,7 @@ class cicadav2_hgq2:
 
                                 model = Sequential([
                                         Input(shape=self.input_shape, name="inputs_"),
-                                        Reshape((18, 14, 1), name="reshape"),
+                                        #Reshape((18, 14, 1), name="reshape"),
                                         QConv2D(4, (2, 2), strides=2,padding="valid",activation='relu',use_bias=False,name="conv"),
                                         Flatten(name="flatten"),
                                         Dropout(1 / 9),
