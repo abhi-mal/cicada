@@ -1,7 +1,7 @@
 ---
 background:
  - path:
-   - '/nfs_scratch/mallampalli/open_data/cicada/training/all_zb_train_files_open_data_calotree_input_ntuplizer.h5'
+   - '/nfs_scratch/mallampalli/open_data/cicada/training/input_files/ZeroBias_with_l1evtnPV.h5'
    name: '2017 opendata ZB Run E'
    use: True
  - path:
@@ -29,29 +29,29 @@ background:
 
 signal:
  - path:
+   - '/nfs_scratch/mallampalli/open_data/cicada/training/input_files/tt_hadronic_with_l1evtnPV.h5'
+   name: 'TTtoHadronic' 
+   use: True
+ - path:
+   - '/nfs_scratch/mallampalli/open_data/cicada/training/input_files/tt_2l2nu_with_l1evtnPV.h5'
+   name: 'TTto2L2Nu'
+   use: True
+ - path:
+   - '/nfs_scratch/mallampalli/open_data/cicada/training/input_files/tt_semileptonic_with_l1evtnPV.h5'
+   name: 'TTtoSemiLeptonic'
+   use: True   
+ - path:
    - '/nfs_scratch/mallampalli/open_data/cicada/training/VBFHToCC_M-125_TuneCP5_13p6TeV_powheg-pythia8_0.h5'
    name: 'VBFHto2C'
    use: False
  - path:
-   - '/eos/project/c/cicada-project/data/2023/Signal/SUEP.h5'
-   name: 'SUEP'
-   use: False
- - path:
-   - '/eos/project/c/cicada-project/data/2023/Signal/H_ToLongLived.h5'
-   name: 'HtoLongLived'
-   use: False
- - path:
-   - '/eos/project/c/cicada-project/data/2023/Signal/VBFHto2C.h5'
-   name: 'VBFHto2C'
-   use: False
- - path:
-   - '/nfs_scratch/mallampalli/open_data/cicada/training/tt_hadronic_calotree_input_ntuplizer.h5'
-   name: 'TTHadronic' 
+   - '/nfs_scratch/mallampalli/open_data/cicada/training/input_files/singleneutrino_with_l1evtnPV.h5'
+   name: 'SingleNeutrino'
    use: True
  - path:
-   - '/nfs_scratch/mallampalli/open_data/cicada/training/tt_2l2nu_calotree_input_ntuplizer.h5'
-   name: 'TT2L2Nu'
-   use: True
+   - '/nfs_scratch/mallampalli/open_data/cicada/training/input_files/qcd_with_l1evtnPV.h5'
+   name: 'QCD'
+   use: True   
 
 exposure:
  training:

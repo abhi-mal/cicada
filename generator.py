@@ -35,7 +35,7 @@ class RegionETGenerator:
         inputs = []
         for dataset_path in datasets_paths:
             inputs.append(
-                h5py.File(dataset_path, "r")["CaloRegions"][:]['et'].astype("float32")
+                h5py.File(dataset_path, "r")["CaloRegions"][:].astype("float32")
             )
         X = np.concatenate(inputs)
         X = np.reshape(X, (-1, 18, 14, 1))
@@ -65,7 +65,7 @@ class RegionETGenerator:
                 continue
             signal_name = dataset["name"]
             for dataset_path in dataset["path"]:
-                X = h5py.File(dataset_path, "r")["CaloRegions"][:]['et'].astype("float32")
+                X = h5py.File(dataset_path, "r")["CaloRegions"][:].astype("float32")
                 X = np.reshape(X, (-1, 18, 14, 1))
                 try:
                     flags = h5py.File(dataset_path, "r")["AcceptanceFlag"][:].astype(

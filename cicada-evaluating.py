@@ -78,7 +78,7 @@ def main(args):
         loss=loss(X_example, y_example)[0],
         name="comparison-background",
     )
-    X_example = X_signal["TTHadronic"][:1]
+    X_example = X_signal["TTto2L2Nu"][:1]
     y_example = teacher.predict(X_example, verbose=args.verbose)
     draw.plot_reconstruction_results(
         X_example,
