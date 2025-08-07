@@ -49,11 +49,11 @@ def main(args):
     X_signal, _ = gen.get_benchmark(config["signal"], filter_acceptance=False)
     gen_train = gen.get_generator(X_train, X_train, 512, True)
     gen_val = gen.get_generator(X_val, X_val, 512)
-    outlier_train = gen.get_data(config["exposure"]["training"])
-    outlier_val = gen.get_data(config["exposure"]["validation"])
+    #outlier_train = gen.get_data(config["exposure"]["training"])
+    #outlier_val = gen.get_data(config["exposure"]["validation"])
 
-    X_train_student = np.concatenate([X_train, outlier_train])
-    X_val_student = np.concatenate([X_val, outlier_train])
+    #X_train_student = np.concatenate([X_train, outlier_train])
+    #X_val_student = np.concatenate([X_val, outlier_train])
 
     if args.huggingface:
         from huggingface_hub import from_pretrained_keras
@@ -100,7 +100,7 @@ def main(args):
         loss=loss(X_example, y_example)[0],
         name="comparison-background",
     )
-    X_example = X_signal["VBFHto2C"][:1]
+    X_example = X_signal["TTto2L2Nu"][:1]
     y_example = teacher.predict(X_example, verbose=args.verbose)['teacher_outputs']
     draw.plot_reconstruction_results(
         X_example,
@@ -144,18 +144,18 @@ def main(args):
     y_pred_background_teacher = teacher.predict(X_test, batch_size=512, verbose=args.verbose)['teacher_outputs']
     y_loss_background_teacher = loss(X_test, y_pred_background_teacher)
     y_loss_background_cicada_v1 = cicada_v1.predict(
-        #X_test.reshape(-1, 252, 1), batch_size=512, verbose=args.verbose #model has reshape
-        X_test.reshape(-1, 18, 14, 1), batch_size=512, verbose=args.verbose
+        X_test.reshape(-1, 252, 1), batch_size=512, verbose=args.verbose #model has reshape
+        #X_test.reshape(-1, 18, 14, 1), batch_size=512, verbose=args.verbose
     )
     y_loss_background_cicada_v2 = cicada_v2.predict(
-        #X_test.reshape(-1, 252, 1), batch_size=512, verbose=args.verbose #model has reshape
-        X_test.reshape(-1, 18, 14, 1), batch_size=512, verbose=args.verbose
+        X_test.reshape(-1, 252, 1), batch_size=512, verbose=args.verbose #model has reshape
+        #X_test.reshape(-1, 18, 14, 1), batch_size=512, verbose=args.verbose
     )
 
     results_teacher, results_cicada_v1, results_cicada_v2 = dict(), dict(), dict()
-    results_teacher["2017 open data Zero Bias (Test)"] = quantize(np.log(y_loss_background_teacher) * 32)# transformation so that we can compare teacher and student anomaly score
-    results_cicada_v1["2017 open data Zero Bias (Test)"] = y_loss_background_cicada_v1
-    results_cicada_v2["2017 open data Zero Bias (Test)"] = y_loss_background_cicada_v2
+    results_teacher["Zero Bias"] = quantize(np.log(y_loss_background_teacher) * 32)# transformation so that we can compare teacher and student anomaly score
+    results_cicada_v1["Zero Bias"] = y_loss_background_cicada_v1
+    results_cicada_v2["Zero Bias"] = y_loss_background_cicada_v2
 
     y_true, y_pred_teacher, y_pred_cicada_v1, y_pred_cicada_v2 = [], [], [], []
     inputs = []
@@ -166,12 +166,12 @@ def main(args):
             data, teacher.predict(data, batch_size=512, verbose=args.verbose)['teacher_outputs']
         )
         y_loss_cicada_v1 = cicada_v1.predict(
-            #data.reshape(-1, 252, 1), batch_size=512, verbose=args.verbose #model has reshape
-            data.reshape(-1, 18, 14, 1), batch_size=512, verbose=args.verbose
+            data.reshape(-1, 252, 1), batch_size=512, verbose=args.verbose #model has reshape
+            #data.reshape(-1, 18, 14, 1), batch_size=512, verbose=args.verbose
         )
         y_loss_cicada_v2 = cicada_v2.predict(
-            #data.reshape(-1, 252, 1), batch_size=512, verbose=args.verbose #model has reshape
-            data.reshape(-1, 18, 14, 1), batch_size=512, verbose=args.verbose
+            data.reshape(-1, 252, 1), batch_size=512, verbose=args.verbose #model has reshape
+            #data.reshape(-1, 18, 14, 1), batch_size=512, verbose=args.verbose
         )
         results_teacher[name] = quantize(np.log(y_loss_teacher) * 32)
         results_cicada_v1[name] = y_loss_cicada_v1

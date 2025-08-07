@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import mplhep as hep
 import numpy as np
 import numpy.typing as npt
+import yaml
 
 from matplotlib.animation import FuncAnimation
 from matplotlib.colors import ListedColormap
@@ -24,7 +25,7 @@ class Draw:
     def __init__(self, output_dir: Path = Path("plots"), interactive: bool = False):
         self.output_dir = output_dir
         self.interactive = interactive
-        self.cmap = ["green", "red", "blue", "orange", "purple", "brown"]
+        self.cmap = self._build_color_map()#["green", "red", "blue", "orange", "purple", "brown"]
         self.model_colors = ["tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple"]
         hep.style.use("CMS")
 
@@ -38,6 +39,21 @@ class Draw:
         if self.interactive:
             plt.show()
         plt.close()
+
+    def _build_color_map(self, config_path: str = './misc/config.yml') -> dict:
+        # for color consistency across runs, get color from config    
+        color_map = {}
+        with open(config_path, 'r') as f:
+                config = yaml.safe_load(f)
+        # Combine all process lists (background, signal, etc.)
+        all_processes = config.get('background', []) + config.get('signal', [])
+        for process in all_processes:
+                # Check if both name and color keys exist and 'use' is True
+                if ((process.get('use')) and ('name' in process) and ('color' in process)):
+                        name = process['name']
+                        color = process['color']
+                        color_map[name] = color   
+        return color_map
 
     def plot_loss_history(
         self, training_loss: npt.NDArray, validation_loss: npt.NDArray, name: str
@@ -280,6 +296,7 @@ class Draw:
         self, scores: List[npt.NDArray], labels: List[str], name: str
     ):
         for score, label in zip(scores, labels):
+            color = self.cmap.get(label, 'black')    
             plt.hist(
                 score.reshape((-1)),
                 bins=100,
@@ -288,6 +305,7 @@ class Draw:
                 label=label,
                 log=True,
                 histtype="step",
+                color=color
             )
         plt.xlabel(r"Anomaly Score")
         plt.legend(loc="center left", bbox_to_anchor=(1, 0.5))
@@ -308,10 +326,11 @@ class Draw:
             'mean': lambda x: np.mean(x**2, axis=(1, 2)),
             'max': lambda x: np.max(x**2, axis=(1, 2))
         }[baseline]
-        for y_true, y_pred, label, color, d in zip(
-            y_trues, y_preds, labels, self.cmap, inputs
+        for y_true, y_pred, label, d in zip(
+            y_trues, y_preds, labels, inputs
         ):
             aucs = []
+            color = self.cmap.get(label, 'black')
             for _, indices in skf.split(y_pred, y_true):
                 fpr, tpr, _ = roc_curve(y_true[indices], y_pred[indices])
                 aucs.append(auc(fpr, tpr))

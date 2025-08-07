@@ -40,12 +40,12 @@ def quantize(arr: npt.NDArray, precision: tuple = (16, 8)) -> npt.NDArray:
 def get_student_targets(
     teacher: Model, gen: RegionETGenerator, X: npt.NDArray
 ) -> data.Dataset:
-    X_hat_dict = teacher.predict(X, batch_size=512, verbose=0)
-    X_hat = X_hat_dict['teacher_outputs'] # needed because we are loading a old model into keras3
+    X_hat = teacher.predict(X, batch_size=512, verbose=0)
+    #X_hat = X_hat_dict['teacher_outputs'] # needed because we are loading a old model into keras3
     y = loss(X, X_hat)
     y = quantize(np.log(y) * 32)
-    #dataset = gen.get_generator(X.reshape((-1, 252, 1)), y, 1024, True)#model has reshape
-    dataset = gen.get_generator(X.reshape((-1, 18, 14, 1)), y, 1024, True)# no reshape
+    dataset = gen.get_generator(X.reshape((-1, 252, 1)), y, 1024, True)#model has reshape
+    #dataset = gen.get_generator(X.reshape((-1, 18, 14, 1)), y, 1024, True)# no reshape
     # fixing memory leak
     del X_hat
     del y
@@ -100,15 +100,20 @@ def main(args) -> None:
     X_train_student = np.concatenate([X_train, outlier_train])
     X_val_student = np.concatenate([X_val, outlier_val])
 
-    #teacher = TeacherAutoencoder((18, 14, 1)).get_model()
-    #teacher.compile(optimizer=Adam(learning_rate=0.001), loss="mse")
-    #t_mc = ModelCheckpoint(f"{args.output}/{teacher.name}", save_best_only=True)
-    #t_log = CSVLogger(f"{args.output}/{teacher.name}/training.log", append=True)
-    teacher_layer = keras.layers.TFSMLayer("models_rand_1/teacher", call_endpoint='serving_default') # using pretrained teacher
-    input_shape = (18, 14, 1) 
-    inputs = keras.Input(shape=input_shape)
-    outputs = teacher_layer(inputs)
-    teacher = keras.Model(inputs, outputs) # needed because we are loading a old model into keras3
+    teacher = TeacherAutoencoder((18, 14, 1)).get_model()
+    teacher.compile(optimizer=Adam(learning_rate=0.001), loss="mse")
+    model_out_dir = f"{args.output}/{teacher.name}"
+    os.makedirs(model_out_dir,exist_ok=True)
+    checkpoint_file = os.path.join(model_out_dir, "model_checkpoint.keras")
+    training_log = os.path.join(model_out_dir, "training.log")    
+    t_mc = ModelCheckpoint(checkpoint_file, save_best_only=True)
+    t_log = CSVLogger(training_log, append=True)
+    #teacher_layer = keras.layers.TFSMLayer("models_rand_1/teacher", call_endpoint='serving_default') # using pretrained teacher
+    #input_shape = (18, 14, 1) 
+    #inputs = keras.Input(shape=input_shape)
+    #outputs = teacher_layer(inputs)
+    #teacher = keras.Model(inputs, outputs) # needed because we are loading a old model into keras3
+    input_shape = (252,)
 
     student_hgq = cicadav2_hgq2(input_shape).get_model()
     student_hgq.compile(optimizer=Adam(learning_rate=0.001), loss="mae")
@@ -131,16 +136,16 @@ def main(args) -> None:
     #cv2_log = CSVLogger(f"{args.output}/{cicada_v2.name}/training.log", append=True)
 
     for epoch in range(args.epochs):
-        #train_model(
-        #    teacher,
-        #    gen_train,
-        #    gen_val,
-        #    epoch=epoch,
-        #    callbacks=[t_mc, t_log],
-        #    verbose=args.verbose,
-        #)
+        train_model(
+            teacher,
+            gen_train,
+            gen_val,
+            epoch=epoch,
+            callbacks=[t_mc, t_log],
+            verbose=args.verbose,
+        )
 
-        tmp_teacher = teacher#load_model(f"{args.output}/teacher")
+        tmp_teacher = load_model(f"{args.output}/teacher/model_checkpoint.keras")#teacher#
         s_gen_train = get_student_targets(tmp_teacher, gen, X_train_student)
         s_gen_val = get_student_targets(tmp_teacher, gen, X_val_student)
         
@@ -197,14 +202,14 @@ if __name__ == "__main__":
         "--output", "-o",
         action=CreateFolder,
         type=Path,
-        default="models_rand_hgq2_epochs100_max1k_uniform_no_reshape/",
+        default="models_rand_hgq2_epochs10_max1k_uniform_with_reshape_teacher_and_student/",
         help="Path to directory where models will be stored",
     )
     parser.add_argument(
         "-e", "--epochs",
         type=int,
         help="Number of training epochs",
-        default=5,
+        default=10,
     )
     parser.add_argument(
         "-v", "--verbose",
