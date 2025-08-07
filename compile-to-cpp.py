@@ -35,31 +35,47 @@ def get_hls_config(keras_model, version):
     hls_config["Model"]["Strategy"] = "Latency"
 
     for layer in hls_config["LayerName"].keys():
-        hls_config["LayerName"][layer]["ReuseFactor"] = 2
+        hls_config["LayerName"][layer]["ReuseFactor"] = 1#2
 
     hls_config["LayerName"]["inputs_"]["Precision"]["result"] = "ap_uint<10>"
+    if 'PartitionFactor' in hls_config["LayerName"]["inputs_"]:
+        del hls_config["LayerName"]["inputs_"]['PartitionFactor']
+#    hls_config['LayerName']['inputs_']['Pragmas'] = {
+#                'ARRAY_PARTITION': {
+#                        'variable': 'inputs_s.V', 
+#                        'type': 'complete', 
+#                        'dim': 0
+#                }
+#    } 
     if version.startswith("1"):
         hls_config["LayerName"]["dense1"]["Precision"]["result"] = "ap_fixed<26, 20>"
         hls_config["LayerName"]["dense1"]["Precision"]["accum"] = "ap_fixed<26, 20>"
     else:
-        hls_config["LayerName"]["conv"]["Strategy"] = "Resource"
+        hls_config["LayerName"]["conv"]["Strategy"] = "Resource"#"Latency"#
         hls_config["LayerName"]["conv"]["ReuseFactor"] = 1
         hls_config["LayerName"]["conv"]["ParallelizationFactor"] = 21
         hls_config["LayerName"]["conv"]["Precision"]["result"] = "ap_fixed<30, 22>"
         hls_config["LayerName"]["conv"]["Precision"]["accum"] = "ap_fixed<30, 22>"
         hls_config["LayerName"]["dense1"]["Precision"]["result"] = "ap_fixed<26, 14>"
         hls_config["LayerName"]["dense1"]["Precision"]["accum"] = "ap_fixed<26, 14>"
-
+#        hls_config['LayerName']['conv']['Pragmas'] = {
+#                'ARRAY_PARTITION': {
+#                        'variable': 'data_buf.V', 
+#                        'type': 'block',#'complete', 
+#                        'factor': 4,
+#                        'dim': 1
+#                }
+#        } 
     hls_config["LayerName"]["dense2"]["Precision"]["result"] = "ap_fixed<26, 14>"
     hls_config["LayerName"]["dense2"]["Precision"]["accum"] = "ap_fixed<26, 14>"
-
+    print(hls_config);input("wait")
     return hls_config
 
 
 def convert_to_hls4ml_model(keras_model, hls_config, version="1.0.0"):
     hls_model = hls4ml.converters.convert_from_keras_model(
         keras_model,
-        clock_period=6.25,
+        clock_period=6.25,#25,#
         backend="Vitis",
         hls_config=hls_config,
         io_type="io_parallel",
@@ -123,9 +139,10 @@ def main(args) -> None:
 
     # Load QKeras model
     keras_model = from_pretrained_keras(
+        #"models_rand_only_student_epochs100/cicada-v2"#
         "cicada-project/cicada-v{}".format(".".join(args.version.split(".")[:-1]))
     )
-
+    print(keras_model.summary()); input("ok?")
     # Genrate hls4ml config
     hls_config = get_hls_config(keras_model, args.version)
 
@@ -138,9 +155,12 @@ def main(args) -> None:
     gen = RegionETGenerator()
     _, _, dataset_background = gen.get_data_split(datasets)
     dataset_signal, _ = gen.get_benchmark(config["signal"], filter_acceptance=False)
-
+    
     # Final tests of the final configuration
     testing(keras_model, hls_model, dataset_signal, dataset_background, args.output, args.interactive)
+
+    hls_model.build(csim=False)
+    hls4ml.report.read_vivado_report("cicada-v{}".format(args.version))
 
     cleanup()
 

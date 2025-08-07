@@ -2,8 +2,9 @@
 background:
  - path:
    - '/nfs_scratch/mallampalli/open_data/cicada/training/input_files/ZeroBias_with_l1evtnPV.h5'
-   name: '2017 opendata ZB Run E'
+   name: 'Zero Bias' #'2017 opendata ZB Run E'
    use: True
+   color: '#3f90da'   
  - path:
    - '/eos/project/c/cicada-project/data/2023/Background/ZB_RunA_0.h5'
    name: '2023 ZB Run A'
@@ -32,26 +33,32 @@ signal:
    - '/nfs_scratch/mallampalli/open_data/cicada/training/input_files/tt_hadronic_with_l1evtnPV.h5'
    name: 'TTtoHadronic' 
    use: True
+   color: '#ffa90e'
  - path:
    - '/nfs_scratch/mallampalli/open_data/cicada/training/input_files/tt_2l2nu_with_l1evtnPV.h5'
    name: 'TTto2L2Nu'
    use: True
+   color: '#b9ac70'
  - path:
    - '/nfs_scratch/mallampalli/open_data/cicada/training/input_files/tt_semileptonic_with_l1evtnPV.h5'
    name: 'TTtoSemiLeptonic'
-   use: True   
+   use: True
+   color: '#bd1f01'   
  - path:
-   - '/nfs_scratch/mallampalli/open_data/cicada/training/VBFHToCC_M-125_TuneCP5_13p6TeV_powheg-pythia8_0.h5'
-   name: 'VBFHto2C'
-   use: False
+   - '/nfs_scratch/mallampalli/open_data/cicada/training/input_files/VBFHToCC_M-125_TuneCP5_13p6TeV_powheg-pythia8_0.h5'
+   name: 'VBFHto2C (old files-not open)'
+   use: True
+   color: '#94a4a2'
  - path:
    - '/nfs_scratch/mallampalli/open_data/cicada/training/input_files/singleneutrino_with_l1evtnPV.h5'
    name: 'SingleNeutrino'
    use: True
+   color: '#832db6'
  - path:
    - '/nfs_scratch/mallampalli/open_data/cicada/training/input_files/qcd_with_l1evtnPV.h5'
    name: 'QCD'
    use: True   
+   color: '#a96b59'
 
 exposure:
  training:
