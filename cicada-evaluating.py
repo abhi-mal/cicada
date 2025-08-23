@@ -67,6 +67,8 @@ def main(args):
         inputs = keras.Input(shape=input_shape)
         outputs = teacher_layer(inputs)
         teacher = keras.Model(inputs, outputs) # needed because we are loading a old model into keras3
+        #teacher = load_model("models_epochs100_with_reshape_tt_exposure_ebops8p7k/teacher/model_checkpoint.keras")
+        #teacher = load_model(f"{args.input}/teacher/model_checkpoint.keras")
         custom_objects_dict = {
                 "QuantizerConfigScope": QuantizerConfigScope,
                 "LayerConfigScope": LayerConfigScope,
@@ -78,6 +80,8 @@ def main(args):
         cicada_v2 = load_model(f"{args.input}/hgq2_model/model_checkpoint.keras",custom_objects=custom_objects_dict)
 
         log = pd.read_csv("models_rand_1/teacher/training.log")
+        #log = pd.read_csv(f"{args.input}/teacher/training.log")
+        #log = pd.read_csv("models_epochs100_with_reshape_tt_exposure_ebops8p7k/teacher/training.log")
         draw.plot_loss_history(
                 log["loss"], log["val_loss"], f"training-history-teacher"
             )
@@ -100,7 +104,7 @@ def main(args):
         loss=loss(X_example, y_example)[0],
         name="comparison-background",
     )
-    X_example = X_signal["TTto2L2Nu"][:1]
+    X_example = X_signal["TTtoHadronic"][:1]
     y_example = teacher.predict(X_example, verbose=args.verbose)['teacher_outputs']
     draw.plot_reconstruction_results(
         X_example,
@@ -152,10 +156,31 @@ def main(args):
         #X_test.reshape(-1, 18, 14, 1), batch_size=512, verbose=args.verbose
     )
 
+    # Random noise
+    #rand_test = np.random.uniform(0, 1000, size=(10_000, 18, 14, 1)).astype("float32")
+    #y_pred_rand_teacher = teacher.predict(rand_test, batch_size=512, verbose=args.verbose)['teacher_outputs']
+    #y_loss_rand_teacher = loss(rand_test, y_pred_rand_teacher)
+    #y_loss_rand_cicada_v1 = cicada_v1.predict(
+    #    rand_test.reshape(-1, 252, 1), batch_size=512, verbose=args.verbose #model has reshape
+    #    #X_test.reshape(-1, 18, 14, 1), batch_size=512, verbose=args.verbose
+    #)
+    #y_loss_rand_cicada_v2 = cicada_v2.predict(
+    #    rand_test.reshape(-1, 252, 1), batch_size=512, verbose=args.verbose #model has reshape
+    #    #X_test.reshape(-1, 18, 14, 1), batch_size=512, verbose=args.verbose
+    #)    
+    #min_loss = np.min(quantize(np.log(y_loss_rand_teacher) * 32));max_loss = np.max(quantize(np.log(y_loss_rand_teacher) * 32))
+    #print(f"rand loss for {y_loss_rand_teacher.shape} teacher outputs: min{min_loss}|max{max_loss}")
+    #min_loss = np.min(y_loss_rand_cicada_v2);max_loss = np.max(y_loss_rand_cicada_v2)
+    #print(f"rand loss {y_loss_rand_cicada_v2.shape} student outputs: min{min_loss}|max{max_loss}")
+
     results_teacher, results_cicada_v1, results_cicada_v2 = dict(), dict(), dict()
     results_teacher["Zero Bias"] = quantize(np.log(y_loss_background_teacher) * 32)# transformation so that we can compare teacher and student anomaly score
     results_cicada_v1["Zero Bias"] = y_loss_background_cicada_v1
     results_cicada_v2["Zero Bias"] = y_loss_background_cicada_v2
+
+    #results_teacher["Random Noise"] = quantize(np.log(y_loss_rand_teacher) * 32)# transformation so that we can compare teacher and student anomaly score
+    #results_cicada_v1["Random Noise"] = y_loss_rand_cicada_v1
+    #results_cicada_v2["Random Noise"] = y_loss_rand_cicada_v2
 
     y_true, y_pred_teacher, y_pred_cicada_v1, y_pred_cicada_v2 = [], [], [], []
     inputs = []
@@ -207,9 +232,45 @@ def main(args):
     )
 
     # ROC Curves with Cross-Validation
-    draw.plot_roc_curve(y_true, y_pred_teacher, [*X_signal], inputs, "roc-teacher")
+    draw.plot_roc_curve(y_true, [quantize(np.log(x) * 32) for x in y_pred_teacher], [*X_signal], inputs, "roc-teacher")#fairer comparison, though it won't make much difference
+    #draw.plot_roc_curve(y_true, y_pred_teacher, [*X_signal], inputs, "roc-teacher")
     draw.plot_roc_curve(y_true, y_pred_cicada_v1, [*X_signal], inputs, "roc-cicada-v1")
     draw.plot_roc_curve(y_true, y_pred_cicada_v2, [*X_signal], inputs, "roc-cicada-v2")
+
+    ### check reconstruction for high loss events
+    '''
+    score_threshold = 100
+    high_scoring_indices = np.where(y_loss_background_cicada_v2.flatten() >= score_threshold)[0]
+    print(f"INFO: Found {len(high_scoring_indices)} normal events with a score >= {score_threshold}.")
+    if len(high_scoring_indices) > 0:
+        print("INFO: Plotting high-scoring normal events...")
+    for i, event_idx in enumerate(high_scoring_indices):
+        # Select one important event.
+        X_important = X_test[event_idx : event_idx + 1]
+
+        # Get the reconstruction from the TEACHER model.
+        y_reconstruction = teacher.predict(X_important, verbose=0)['teacher_outputs']
+
+        # Calculate the loss for this specific event.
+        event_loss = loss(X_important, y_reconstruction)[0]
+        
+        # Get the score that the STUDENT model assigned to it.
+        event_score = y_loss_background_cicada_v2[event_idx][0]
+
+        # Plot the results and save to a unique file.
+        draw.plot_reconstruction_results(
+                X_important,
+                y_reconstruction,
+                loss=event_loss,
+                name=f"important_event_idx_{event_idx}_score_{int(event_score)}",
+                qloss= quantize(np.log(event_loss) * 32)
+        )
+        # Optional: Limit the number of plots to avoid generating too many files.
+        if i >= 51: # Plot the top 50 examples
+                print("INFO: Reached plot limit (50). Stopping.")
+                break 
+        '''           
+
 
 
 if __name__ == "__main__":

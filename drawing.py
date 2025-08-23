@@ -127,7 +127,7 @@ class Draw:
                 eta + 4,
                 weights=weights,
                 density=True,
-                facecolor=None,
+                facecolor='none',
                 bins=np.arange(4, 19),
                 label=label,
                 histtype="step"
@@ -136,7 +136,7 @@ class Draw:
                 phi,
                 weights=weights,
                 density=True,
-                facecolor=None,
+                facecolor='none',
                 bins=np.arange(19),
                 label=label,
                 histtype="step",
@@ -163,6 +163,23 @@ class Draw:
         plt.xlabel(r"E$_T$")
         plt.legend(loc="best")
         self._save_fig(f'profiling-deposits-{name}')
+
+    def plot_nPV_distribution(
+        self, npvs: List[npt.NDArray], labels: List[str], name: str,
+    ):
+        for npv, label in zip(npvs, labels):
+            plt.hist(
+                npv,
+                bins=100,
+                range=(0, 100),
+                density=1,
+                label=label,
+                log=False,
+                histtype="step",
+            )
+        plt.xlabel("Number of Primary Vertices (nPV)")
+        plt.legend(loc="best")
+        self._save_fig(f'profiling-nPV-{name}')
 
     def plot_cell_means(
         self, deposits: npt.NDArray, name: str
@@ -206,6 +223,7 @@ class Draw:
         deposits_out: npt.NDArray,
         loss: float,
         name: str,
+        qloss: float = None,
         is_data: bool = False,
     ):
         fig, (ax1, ax2, ax3) = plt.subplots(
@@ -235,7 +253,8 @@ class Draw:
 
         ax3.get_xaxis().set_visible(False)
         ax3.get_yaxis().set_visible(False)
-        ax3.set_title(rf"|$\Delta$|, MSE: {loss: .2f}", fontsize=18, y=-0.1)
+        if(qloss!=None): ax3.set_title(rf"|$\Delta$|, MSE: {loss: .2f}, teach_score : {qloss: .2f}", fontsize=18, y=-0.1)
+        else: ax3.set_title(rf"|$\Delta$|, MSE: {loss: .2f}", fontsize=18, y=-0.1)
 
         im = ax3.imshow(
             np.abs(deposits_in - deposits_out).reshape(18, 14),

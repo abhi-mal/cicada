@@ -48,13 +48,14 @@ class TeacherAutoencoder:
         return Model(inputs, outputs, name="teacher")
 
 class cicadav2_hgq2:
-    def __init__(self, input_shape: tuple):
+    def __init__(self, input_shape: tuple, beta: float=1e-4):
         self.input_shape = input_shape
-
+        self.beta = beta
     def get_model(self): 
+        print(f"Using{self.beta}")
         with QuantizerConfigScope(q_type='kif', place='weight', overflow_mode='SAT_SYM', round_mode='RND'):
                 with QuantizerConfigScope(q_type='kif', place='datalane', overflow_mode='SAT_SYM', round_mode='RND'):
-                        with LayerConfigScope(enable_ebops=True, beta0=1e-5):
+                        with LayerConfigScope(enable_ebops=True, beta0=self.beta):
 
                                 model = Sequential([
                                         Input(shape=self.input_shape, name="inputs_"),
